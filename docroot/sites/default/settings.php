@@ -598,3 +598,20 @@ $conf['404_fast_html'] = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN"
  * Remove the leading hash sign to enable.
  */
 # $conf['theme_debug'] = TRUE;
+
+// Appended by drush archive-restore command.
+
+$databases = array (
+  'default' => 
+  array (
+    'default' => 
+    array (
+      'driver' => 'mysql',
+      'username' => 'codeassignment',
+      'password' => 'codeassignment',
+      'host' => 'localhost',
+      'port' => '3307',
+      'database' => 'codeassignment',
+    ),
+  ),
+);
