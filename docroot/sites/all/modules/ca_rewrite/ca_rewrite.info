@@ -1,0 +1,5 @@
+name = CA Rewrite
+description = Rewrites text to ensure it meets strict Code Assignment standards.
+core = 7.x
+dependencies[] = entity
+dependencies[] = field

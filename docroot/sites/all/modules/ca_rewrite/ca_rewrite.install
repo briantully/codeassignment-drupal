@@ -1,0 +1,36 @@
+<?php
+
+function ca_rewrite_schema() {
+  $schema['ca_rewrite_pattern'] = array (
+    'description' => 'CA Rewrite Pattern',
+    'fields' => array(
+      'eid' => array(
+        'description' => 'Primary key for a rewrite pattern.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'description' => array(
+        'description' => 'Description of rewrite pattern.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'pattern' => array(
+        'description' => 'The search pattern.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'replacement' => array(
+        'description' => 'The replacement.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('eid'),
+  );
+
+  return $schema;
+}
