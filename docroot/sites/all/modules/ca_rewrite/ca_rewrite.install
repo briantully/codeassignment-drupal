@@ -34,3 +34,44 @@ function ca_rewrite_schema() {
 
   return $schema;
 }
+
+/**
+ * Implements hook_update_N().
+ * Using Batch API, updates existing feed_items that were imported from feeds
+ * and changes the titles based on ca_rewrite_patterns
+ */
+function ca_rewrite_update_7000(&$sandbox) {
+  if (!isset($sandbox['max'])) {
+    $query = db_select('node', 'n');
+    $query->addExpression('COUNT(*)', 'count');
+    $query->condition('n.type', 'feed_item');
+    $sandbox['max'] = $query->execute()->fetchField();
+    $sandbox['current_position'] = 0;
+  }
+
+  if ($sandbox['max'] > 0) {
+    $limit = 10;
+    $nids = db_select('node', 'n')
+      ->fields('n', array('nid'))
+      ->condition('n.type', 'feed_item')
+      ->orderBy('n.nid')
+      ->range($sandbox['current_position'], $limit)
+      ->execute()
+      ->fetchCol();
+    $nodes = node_load_multiple($nids);
+    foreach ($nodes as $node) {
+      // ca_rewrite_node_presave() should filter the titles before saving
+      node_save($node);
+    }
+
+    $sandbox['current_position'] += $limit;
+    $sandbox['#finished'] = $sandbox['current_position'] / $sandbox['max'];
+  }
+  else {
+    $sandbox['#finished'] = 1;
+  }
+
+  if ($sandbox['#finished'] >= 1) {
+    return format_plural($sandbox['max'], '1 node updated', '@count nodes updated');
+  }
+}

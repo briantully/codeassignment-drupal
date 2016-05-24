@@ -34,8 +34,8 @@ function ca_rewrite_filter_process($text) {
       if ($chunk_type == 'text') {
         // Only process this text if there are no unclosed $ignore_tags.
         if ($open_tag == '') {
-        // If there is a match, inject a link into this chunk via the callback
-        // function contained in $task.
+          // If there is a match, inject a link into this chunk via the callback
+          // function contained in $task.
           $chunks[$i] = preg_replace($pattern_search, $pattern_replace, $chunks[$i]);
         }
         // Text chunk is done, so next chunk must be a tag.
@@ -44,7 +44,7 @@ function ca_rewrite_filter_process($text) {
       else {
         // Only process this tag if there are no unclosed $ignore_tags.
         if ($open_tag == '') {
-        // Check whether this tag is contained in $ignore_tags.
+          // Check whether this tag is contained in $ignore_tags.
           if (preg_match("`<($ignore_tags)(?:\s|>)`i", $chunks[$i], $matches)) {
             $open_tag = $matches[1];
           }
@@ -64,12 +64,41 @@ function ca_rewrite_filter_process($text) {
   return $text;
 }
 
+// !NOTES ON CHANGES
+// FIXME: (btully)
+/**
+ * Switch from hook_node_view_alter() to hook_node_presave()
+ *
+ * The ca_rewrite_filter_process gets run on each node load from within the
+ * views which is expensive on the homepage since it does this on the render
+ * side after the node is loaded. Since we are only changing the title, why not
+ * filter/change it at the time of import/update and store it directly in the
+ * database? Doing so should be more performant and leverage better caching
+ * strategies.
+ */
+
 /**
  * Implements hook_node_view_alter().
  */
+/*
 function ca_rewrite_node_view_alter(&$build) {
   // Node title is not run through text formats, so replace contents here.
   $build['#node']->title = ca_rewrite_filter_process($build['#node']->title);
+}
+*/
+
+// TODO: (btully) ensure the proper filtering is occuring during feed imports
+// and confirm that hash check for feed importer doesn't falsely identify
+// updated node title as a diff, i.e., we don't want to import the same feed
+// item more than once.
+/**
+ * Implements hook_node_presave().
+ */
+function ca_rewrite_node_presave($node) {
+  if ($node->type == 'feed_item') {
+    // Alter title, add time stamp at the end of title:
+    $node->title = ca_rewrite_filter_process($node->title);
+  }
 }
 
 /**
@@ -81,10 +110,11 @@ function ca_rewrite_patterns() {
   $query = new EntityFieldQuery();
 
   $query->entityCondition('entity_type', 'ca_rewrite_pattern')
-        ->addMetaData('account', user_load(1, TRUE)); // Run the query as user 1.
+        ->addMetaData('account', user_load(1, TRUE));
+  // Run the query as user 1.
   $results = $query->execute();
 
-  foreach($results['ca_rewrite_pattern'] as $result) {
+  foreach ($results['ca_rewrite_pattern'] as $result) {
     $pattern = ca_rewrite_pattern_load($result->eid);
     $pattern_matches = array($pattern->pattern => $pattern->replacement);
   }
@@ -95,7 +125,7 @@ function ca_rewrite_patterns() {
 /**
  * Implements hook_entity_info().
  */
-function ca_rewrite_entity_info(){
+function ca_rewrite_entity_info() {
   return array(
     'ca_rewrite_pattern' => array(
       'label' => t('Rewrite Pattern'),
@@ -115,7 +145,7 @@ function ca_rewrite_entity_info(){
       'module' => 'ca_rewrite',
       'label callback' => 'entity_class_label',
       'uri callback' => 'entity_class_uri',
-    )
+    ),
   );
 }
 
@@ -143,8 +173,10 @@ function ca_rewrite_pattern_access($op, $eid = NULL, $account = NULL) {
   switch ($op) {
     case 'create':
       return user_access('create rewrite pattern', $account);
+
     case 'view':
       return user_access('view rewrite pattern', $account);
+
     case 'update':
       return user_access('edit rewrite pattern', $account);
   }
