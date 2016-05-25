@@ -96,7 +96,7 @@ function ca_rewrite_node_view_alter(&$build) {
  */
 function ca_rewrite_node_presave($node) {
   if ($node->type == 'feed_item') {
-    // Alter title, add time stamp at the end of title:
+    // Alter title, run it through rewrite patterns:
     $node->title = ca_rewrite_filter_process($node->title);
   }
 }
