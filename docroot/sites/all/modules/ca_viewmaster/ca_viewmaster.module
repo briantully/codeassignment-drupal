@@ -1,0 +1,15 @@
+<?php
+/**
+ * @file
+ * CA ViewMaster.
+ *
+ * This module takes views exported from the database and places them in code in
+ * order to boost performance and integrate with version control.
+ */
+
+/**
+ * Implements hook_views_api().
+ */
+function ca_viewmaster_views_api() {
+  return array('api' => 3.0);
+}

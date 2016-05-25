@@ -1,0 +1,3 @@
+name = CA Viewmaster
+description = This module takes views exported from the database and places them in code in order to boost performance.
+core = 7.x
