@@ -228,6 +228,11 @@ define('ADVAGG_SHOW_FILE_CHANGED_MESSAGE', TRUE);
  */
 define('ADVAGG_FILE_READ_FAILURE_TIMEOUT', 3600);
 
+/**
+ * See if the mtime != if TRUE < if FALSE.
+ */
+define('ADVAGG_STRICT_MTIME_CHECK', TRUE);
+
 // Core hook implementations.
 /**
  * Inbound URL rewrite helper.
@@ -3390,6 +3395,11 @@ function advagg_jsspecialchars($string = '') {
  * @see drupal_get_js()
  */
 function advagg_pre_render_scripts(array $elements) {
+  // Don't run it twice.
+  if (!empty($elements['#groups'])) {
+    return $elements;
+  }
+
   // Group and aggregate the items.
   if (isset($elements['#group_callback'])) {
     // Call advagg_group_js().
@@ -3492,6 +3502,9 @@ function advagg_pre_render_scripts(array $elements) {
             $element['#attributes']['onerror'] = '';
           }
           $element['#attributes']['onerror'] .= $item['onerror'];
+        }
+        if (!empty($group['attributes'])) {
+          $element['#attributes'] += $group['attributes'];
         }
         $element['#browsers'] = isset($item['browsers']) ? $item['browsers'] : array();
 
@@ -3625,6 +3638,11 @@ function advagg_get_css_prefix_suffix() {
  * @see drupal_get_css()
  */
 function advagg_pre_render_styles(array $elements) {
+  // Don't run it twice.
+  if (!empty($elements['#groups'])) {
+    return $elements;
+  }
+
   // Group and aggregate the items.
   if (isset($elements['#group_callback'])) {
     // Call drupal_group_css().
@@ -4146,10 +4164,11 @@ function advagg_scan_filesystem_for_changes_live() {
     }
     if (variable_get('advagg_show_file_changed_message', ADVAGG_SHOW_FILE_CHANGED_MESSAGE)) {
       $ext = pathinfo($filename, PATHINFO_EXTENSION);
-      drupal_set_message(t('The file %filename has changed. %db_usage aggregates are using this file. %db_count db cache entries and all %type full cache entries have been flushed from the cache bins.', array(
+      drupal_set_message(t('The file %filename has changed. %db_usage aggregates are using this file. %db_count db cache entries and all %type full cache entries have been flushed from the cache bins. Trigger: <code>@changes</code>', array(
         '%filename' => $filename,
         '%db_usage' => count($data[0]),
         '%db_count' => count($data[1]),
+        '@changes' => print_r($data[2], TRUE),
         '%type' => $ext,
       )));
     }

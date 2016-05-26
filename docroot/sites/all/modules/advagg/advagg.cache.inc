@@ -44,25 +44,30 @@ function advagg_scan_for_changes() {
         'content_hash',
         'linecount',
       );
-      $changed = FALSE;
+      $changed = array();
       foreach ($keys_to_compare as $key) {
         if ($row[$key] != $info[$key]) {
-          $changed = TRUE;
+          $changed[] = $key . ' db:' . $row[$key] . ' file:' . $info[$key];
           break;
         }
       }
       // Compare mtime if it is not zero.
-      if (!$changed && empty($info['split']) && !empty($info['mtime']) && $row['mtime'] != $info['mtime']) {
-        $changed = TRUE;
+      if (empty($info['split']) && !empty($info['mtime'])) {
+        if (variable_get('advagg_strict_mtime_check', ADVAGG_STRICT_MTIME_CHECK) && $row['mtime'] != $info['mtime']) {
+          $changed[] = 'mtime db:' . $row['mtime'] . ' file:' . $info['mtime'];
+        }
+        elseif ($row['mtime'] < $info['mtime']) {
+          $changed[] = 'mtime db:' . $row['mtime'] . ' file:' . $info['mtime'];
+        }
       }
 
-      if (!$changed) {
+      if (empty($changed)) {
         // Call hook_advagg_scan_for_changes().
         $changes_array = module_invoke_all('advagg_scan_for_changes', $row['filename']);
         if (is_array($changes_array)) {
           foreach ($changes_array as $value) {
             if (!empty($value)) {
-              $changed = TRUE;
+              $changed[] = $value;
               break;
             }
           }
@@ -70,7 +75,8 @@ function advagg_scan_for_changes() {
       }
 
       // If file has changed, add it to the array.
-      if ($changed) {
+      if (!empty($changed)) {
+        $info['changes'] = $changed;
         $files_that_have_changed[$row['filename']] = $info;
       }
     }
@@ -114,7 +120,14 @@ function advagg_push_new_changes() {
         }
       }
 
-      $results[$filename] = array(count($cache_ids), count($cache_hits));
+      $changes = array();
+      if (!empty($meta_data['changes'])) {
+        $changes = $meta_data['changes'];
+        unset($meta_data['changes']);
+      }
+
+      $results[$filename] = array(count($cache_ids), count($cache_hits), $changes);
+
       // Update database.
       advagg_insert_update_files(array($filename => $meta_data), $ext);
     }
@@ -808,7 +821,7 @@ function advagg_detect_subfile_changes($filename, array $subfiles, $keyname, $sa
     $info[$keyname] = advagg_get_hash_settings($hash_id);
   }
 
-  $subfile_changed = FALSE;
+  $subfile_changed = array();
   // Check every subfile seeing if they have changed.
   foreach ($subfiles as $subfile) {
     $current_file_info = $defaults = array(
@@ -836,10 +849,10 @@ function advagg_detect_subfile_changes($filename, array $subfiles, $keyname, $sa
     // Check for any differences.
     $diff = array_diff_assoc($saved_file_info, $current_file_info);
     if (!empty($diff)) {
-      $subfile_changed = TRUE;
+      $subfile_changed[$subfile] = $diff;
     }
   }
-  if ($subfile_changed && $save_changes) {
+  if (!empty($subfile_changed) && $save_changes) {
     $cache_id = 'advagg:file:' . $info['filename_hash'];
 
     // Set static cache.

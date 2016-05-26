@@ -490,7 +490,7 @@ function advagg_advagg_scan_for_changes($filename, $save_changes = FALSE) {
     return;
   }
 
-  $this_file_changed = FALSE;
+  $file_changed = array();
   foreach ($adaptivethemes as $theme_name => $path) {
     // Set up some paths we use to get and save files.
     $path_to_responsive_css = drupal_get_path('theme', $theme_name) . '/css/';
@@ -517,12 +517,13 @@ function advagg_advagg_scan_for_changes($filename, $save_changes = FALSE) {
     }
 
     // See if anything has changed.
-    if (advagg_detect_subfile_changes($filename, $file_map[$filename], 'adaptivetheme', $save_changes)) {
-      $this_file_changed = TRUE;
+    $changes = advagg_detect_subfile_changes($filename, $file_map[$filename], 'adaptivetheme', $save_changes);
+    if (!empty($changes)) {
+      $file_changed[$path] = $changes;
     }
   }
 
-  return $this_file_changed;
+  return $file_changed;
 }
 
 /**

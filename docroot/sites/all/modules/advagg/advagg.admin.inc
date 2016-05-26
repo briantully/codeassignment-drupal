@@ -976,10 +976,11 @@ function advagg_admin_flush_cache_button() {
         continue;
       }
       $ext = pathinfo($filename, PATHINFO_EXTENSION);
-      drupal_set_message(t('The file %filename has changed. %db_usage aggregates are using this file. %db_count db cache entries and all %type full cache entries have been flushed from the cache bins.', array(
+      drupal_set_message(t('The file %filename has changed. %db_usage aggregates are using this file. %db_count db cache entries and all %type full cache entries have been flushed from the cache bins. Trigger: <code>@changes</code>', array(
         '%filename' => $filename,
         '%db_usage' => $data[0],
         '%db_count' => $data[1],
+        '@changes' => print_r($data[2], TRUE),
         '%type' => $ext,
       )));
     }

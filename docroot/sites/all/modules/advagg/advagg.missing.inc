@@ -1025,13 +1025,13 @@ function advagg_save_aggregate($filename, array $files, $type, array $aggregate_
         }
         $free_space = @disk_free_space($full_dir);
         if ($free_space !== FALSE && strlen($data) > $free_space) {
-          watchdog('advagg', 'Write to file system failed. Disk is full. %uri', array('%uri' => $uri), WATCHDOG_ALERT);
+          watchdog('advagg', 'Write to file system failed. Disk is full. %uri. !errors. %full_dir.', array('%uri' => $uri, '!errors' => print_r($errors), '%full_dir' => $full_dir), WATCHDOG_ALERT);
         }
         elseif (!is_writable($full_dir)) {
-          watchdog('advagg', 'Write to file system failed. Check directory permissions. %uri', array('%uri' => $uri), WATCHDOG_ERROR);
+          watchdog('advagg', 'Write to file system failed. Check directory permissions. %uri. !errors. %full_dir.', array('%uri' => $uri, '!errors' => print_r($errors), '%full_dir' => $full_dir), WATCHDOG_ERROR);
         }
         else {
-          watchdog('advagg', 'Write to file system failed. %uri', array('%uri' => $uri), WATCHDOG_ERROR);
+          watchdog('advagg', 'Write to file system failed. %uri. !errors. %full_dir.', array('%uri' => $uri, '!errors' => print_r($errors), '%full_dir' => $full_dir), WATCHDOG_ERROR);
         }
         // If the file is empty, remove it. Serving via drupal is better than an
         // empty aggregate being served.

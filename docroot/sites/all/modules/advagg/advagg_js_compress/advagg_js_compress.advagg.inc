@@ -179,13 +179,15 @@ function advagg_js_compress_advagg_save_aggregate_alter(&$files_to_save, $aggreg
   $gzip_exists = FALSE;
   foreach ($files_to_save as $uri => $contents) {
     // See if this uri contains .gz near the end of it.
-    $pos = strripos($uri, '.gz', 91 + strlen(ADVAGG_SPACE) * 3);
-    if (!empty($pos)) {
-      $len = strlen($uri);
-      // .gz file exists, exit loop.
-      if ($pos == $len - 3) {
-        $gzip_exists = TRUE;
-        break;
+    if (strlen($uri) >= 91 + strlen(ADVAGG_SPACE) * 3) {
+      $pos = strripos($uri, '.gz', 91 + strlen(ADVAGG_SPACE) * 3);
+      if (!empty($pos)) {
+        $len = strlen($uri);
+        // .gz file exists, exit loop.
+        if ($pos == $len - 3) {
+          $gzip_exists = TRUE;
+          break;
+        }
       }
     }
   }
@@ -327,7 +329,7 @@ function advagg_js_compress_prep(&$contents, $filename, array $aggregate_setting
   // Jsmin doesn't handle multi-byte characters before version 2, fall back to
   // different compressor if jsmin version < 2 and $contents contains multi-
   // byte characters.
-  if ($compressor == 3 && (version_compare(phpversion('jsmin'), '2.0.0', '<') &&advagg_js_compress_string_contains_multibyte_characters($contents))) {
+  if ($compressor == 3 && (version_compare(phpversion('jsmin'), '2.0.0', '<') && advagg_js_compress_string_contains_multibyte_characters($contents))) {
     if (defined('PHP_VERSION_ID') && constant('PHP_VERSION_ID') >= 50300) {
       $compressor = 5;
       watchdog('advagg_js_compress', 'The currently installed jsmin version does not handle multibyte characters, you may consider to upgrade the jsmin extension. Using JSqueeze fallback.');
@@ -350,6 +352,12 @@ function advagg_js_compress_prep(&$contents, $filename, array $aggregate_setting
   else {
     // Strip Byte Order Marks (BOM's), preg_* cannot parse these well.
     $contents = str_replace(pack("CCC", 0xef, 0xbb, 0xbf), "", $contents);
+    // Jsmin may have errors (incorrectly determining EOLs) with mixed tabs
+    // and spaces. An example: jQuery.Cycle 3.0.3 - http://jquery.malsup.com/
+    if ($compressor == 3) {
+      $contents = str_replace("\t", " ", $contents);
+    }
+
     // Use the compressor.
     list(, , , $functions) = advagg_js_compress_configuration();
     if (isset($functions[$compressor])) {

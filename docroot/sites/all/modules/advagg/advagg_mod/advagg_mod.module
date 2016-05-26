@@ -721,7 +721,7 @@ function advagg_mod_advagg_modify_css_pre_render_alter(&$children, &$elements) {
   }
 
   // Return early if this setting is disabled.
-  $css_defer = variable_get('advagg_mod_css_defer', ADVAGG_MOD_CSS_DEFER);
+  list(, , , , , , , , , , $css_defer) = advagg_mod_get_lists(array(), $elements['#items']);
   if (empty($css_defer)) {
     return;
   }
@@ -976,17 +976,22 @@ function advagg_mod_js_no_ajaxpagestate(array &$scripts) {
  * Generate a list of rules and exceptions for js files and inline.
  *
  * Controls inline wrapping and defer. Controls no async/defer file list.
- * Controls files that say in the header.
+ * Controls files that stay in the header.
  *
  * @param array $js
  *   The JS array.
+ * @param array $css
+ *   The CSS array.
  *
  * @return array
  *   A multidimensional array.
  */
-function advagg_mod_get_lists(array $js = array()) {
+function advagg_mod_get_lists(array $js = array(), array $css = array()) {
   $lists = &drupal_static(__FUNCTION__);
-  if (!isset($lists)) {
+  $js_count = count($js);
+  $css_count = count($css);
+  $key = $js_count . '.' . $css_count;
+  if (!isset($lists[$key])) {
     // Do not move to footer file list.
     $header_file_list = array(
       // Modernizr js.
@@ -1018,12 +1023,17 @@ function advagg_mod_get_lists(array $js = array()) {
     if (module_exists('devel')) {
       $inline_js_wrap_skip_list[] = 'function krumo(';
     }
+    if (module_exists('googleanalytics')) {
+      $inline_js_wrap_skip_list[] = '_gaq.push(["_';
+      $inline_js_wrap_skip_list[] = '"GoogleAnalyticsObject"';
+    }
 
     // Get inline defer js skip list string and convert it to an array.
     $inline_js_defer_skip_list = array_filter(array_map('trim', explode("\n", variable_get('advagg_mod_defer_inline_js_skip_list', ADVAGG_MOD_DEFER_INLINE_JS_SKIP_LIST))));
     $inline_js_defer_skip_list[] = 'loadCSS(';
     if (module_exists('googleanalytics')) {
       $inline_js_defer_skip_list[] = '_gaq.push(["_';
+      $inline_js_defer_skip_list[] = '"GoogleAnalyticsObject"';
     }
 
     // If there is a fast clicker, ajax links might not work if ajax.js is
@@ -1084,10 +1094,12 @@ function advagg_mod_get_lists(array $js = array()) {
     $move_js_to_footer = variable_get('advagg_mod_js_footer', ADVAGG_MOD_JS_FOOTER);
     $defer_setting = variable_get('advagg_mod_js_defer', ADVAGG_MOD_JS_DEFER);
     $async_setting = variable_get('advagg_mod_js_async', ADVAGG_MOD_JS_ASYNC);
+    $css_defer = variable_get('advagg_mod_css_defer', ADVAGG_MOD_CSS_DEFER);
+
 
     // Allow other modules to add/edit the above lists.
     // Call hook_advagg_mod_get_lists_alter().
-    $lists = array(
+    $lists[$key] = array(
       $header_file_list,
       $header_inline_list,
       $no_async_defer_list,
@@ -1098,10 +1110,11 @@ function advagg_mod_get_lists(array $js = array()) {
       $move_js_to_footer,
       $defer_setting,
       $async_setting,
+      $css_defer,
     );
-    drupal_alter('advagg_mod_get_lists', $lists, $js);
+    drupal_alter('advagg_mod_get_lists', $lists[$key], $js, $css);
   }
-  return $lists;
+  return $lists[$key];
 }
 
 /**
@@ -1112,11 +1125,6 @@ function advagg_mod_get_lists(array $js = array()) {
  */
 function advagg_mod_js_move_to_footer(array &$js) {
   // Move all JS to the footer.
-  $move_js_to_footer = variable_get('advagg_mod_js_footer', ADVAGG_MOD_JS_FOOTER);
-  if (empty($move_js_to_footer)) {
-    return;
-  }
-
   list($header_file_list, $header_inline_list, , , , , $all_in_footer_list, $move_js_to_footer) = advagg_mod_get_lists($js);
   if (empty($move_js_to_footer)) {
     return;
@@ -1196,13 +1204,7 @@ function advagg_mod_js_move_to_footer(array &$js) {
 function advagg_mod_js_async_defer(array &$js) {
   $jquery_defered = FALSE;
 
-  // Return eairly if this is disabled.
-  $defer_setting = variable_get('advagg_mod_js_defer', ADVAGG_MOD_JS_DEFER);
-  $async_setting = variable_get('advagg_mod_js_async', ADVAGG_MOD_JS_ASYNC);
-  if (!$defer_setting && !$async_setting) {
-    return $jquery_defered;
-  }
-
+  // Return early if this is disabled.
   list(, , $no_async_defer_list, $inline_wrapper_list, , , , , $defer_setting, $async_setting) = advagg_mod_get_lists($js);
   if (!$defer_setting && !$async_setting) {
     return $jquery_defered;

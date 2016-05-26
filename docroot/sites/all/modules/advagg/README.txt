@@ -263,6 +263,10 @@ current defaults are shown.
     // hash doesn't match.
     $conf['advagg_file_read_failure_timeout'] = 3600;
 
+    // If FALSE mtime of files will only trigger a change if they are in the
+    // future.
+    $conf['advagg_strict_mtime_check'] = TRUE;
+
 
 ADDITIONAL OPTIONS FOR DRUPAL_ADD_CSS/JS FUNCTIONS
 --------------------------------------------------
