@@ -615,3 +615,44 @@ $databases = array (
     ),
   ),
 );
+
+
+$conf['cache_backends'] = array();
+$conf['cache_backends'][] = 'includes/cache-install.inc';
+/*
+ * VARNISH SETTINGS
+ */
+## Varnish
+# http://drupal.org/project/varnish
+# Add Varnish as the page cache handler.
+$conf['cache_backends'][] = 'sites/all/modules/varnish/varnish.cache.inc';
+$conf['cache_class_cache_page'] = 'VarnishCache';
+# Bypass Drupal bootstrap for anonymous users so that Drupal sets max-age > 0
+$conf['page_cache_invoke_hooks'] = FALSE;
+$conf['reverse_proxy'] = TRUE;
+$conf['cache'] = 1;
+$conf['cache_lifetime'] = 0;
+$conf['page_cache_maximum_age'] = 21600;
+$conf['reverse_proxy_addresses'] = array('127.0.0.1');
+$conf['reverse_proxy_header'] = 'HTTP_X_FORWARDED_FOR';
+$conf['varnish_version'] = '3';
+$conf['omit_vary_cookie'] = true;
+$conf['varnish_control_key'] = 'baaa9628fa121456f9d4eca4f101c47ef0edd8aba08212099c32b0ac4965341c';
+$conf['varnish_control_terminal'] = 'localhost:6082';
+
+/*
+ * MEMCACHED SETTINGS
+ */
+$conf['memcache_servers'] = array('localhost:11211' => 'default');
+$conf['cache_backends'][] = 'sites/all/modules/memcache/memcache.inc';
+$conf['lock_inc'] = 'sites/all/modules/memcache/memcache-lock.inc';
+$conf['memcache_stampede_protection'] = TRUE;
+$conf['cache_default_class'] = 'MemCacheDrupal';
+
+// The 'cache_form' bin must be assigned to non-volatile storage.
+$conf['cache_class_cache_form'] = 'DrupalDatabaseCache';
+
+// Don't bootstrap the database when serving pages from the cache.
+$conf['page_cache_without_database'] = TRUE;
+$conf['page_cache_invoke_hooks'] = FALSE;
+
