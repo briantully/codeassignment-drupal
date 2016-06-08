@@ -1571,3 +1571,10 @@ fieldset.mayo-layout-form div.form-type-radio {
 }
 /*@include MQ(standard-pc) {
 }   */
+
+.front .panel-col-top .inside {
+  border: 1px solid #eee;
+  padding: 10px 20px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 3px 0px rgba(0,0,0,0.35);
+}

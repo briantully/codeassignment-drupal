@@ -830,3 +830,12 @@ ul.action-links li a {
 @import "partials/admin-layout-settings";
 @import "partials/mobile-first";
 @import "partials/responsive-media";
+
+
+/* workaround for rounded corners block style on homepage */
+.front .panel-col-top .inside {
+  border: 1px solid #eee;
+  padding: 10px 20px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 3px 0px rgba(0,0,0,0.35);
+}
